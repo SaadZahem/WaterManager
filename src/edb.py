@@ -1,101 +1,21 @@
-from tkinter import ttk
-from tkinter import *
+
 import tkinter as tk
-from tkinter import messagebox as mb
-
-from typing import NamedTuple
-
-from unicodedata import name
+from tkinter import ttk, messagebox, Label, Frame, Entry, Button, StringVar
 from urllib import response
-import sys
-from PIL import ImageTk, Image
-import sqlite3
-from data_table import DataTable
+
 from tkcalendar import DateEntry
 
-# *************************************************************************************************************
+from .models import location_options
+from .widgets import DataTable, Image
+
+
+
 p = "icon/"
 fo = ("tajawal", 16, "bold")
 d = "fg+'gold',bg='#0B2F3A',font=fo"
 
-# country, governorate and city comboboxes options
-options = {
-    "Egypt": {
-        "": [],
-        "Alexandria": [
-            "Damietta",
-            "Elalyoubia",
-            "Elbehira",
-            "Eldakahlia",
-            "Elfayoum",
-            "Elgharbia",
-            "Elgiza",
-            "Elismailia",
-            "Elkalubia",
-            "Elminofia",
-            "Elminia",
-            "Elsharkia",
-            "Elsuez",
-            "Elwadi Elgidid",
-            "Kafr Elsheikh",
-            "Luxor",
-            "Matoruh",
-            "North Sinai",
-            "Port Said",
-            "Qena",
-            "Red Sea",
-            "Sohag",
-            "South Sinai",
-        ],
-        "Assuit": [],
-        "Aswan": [],
-        "Beni Suef": [],
-        "Cairo": [],
-        "Damietta": [],
-        "Elalyoubia": [],
-        "Elbehira": [],
-        "Eldakahlia": [],
-        "Elfayoum": [],
-        "Elgharbia": [],
-        "Elgiza": [],
-        "Elismailia": [],
-        "Elkalubia": [],
-        "Elminofia": [],
-        "Elminia": [],
-        "Elsharkia": [],
-        "Elsuez": [],
-        "Elwadi Elgidid": [],
-        "Kafr Elsheikh": [],
-        "Luxor": [],
-        "Matoruh": [],
-        "North Sinai": [],
-        "Port Said": [],
-        "Qena": [],
-        "Red Sea": [],
-        "Sohag": [],
-        "South Sinai": [],
-    },
-}
 
-
-class IMG(Label):
-    def __init__(self, master, src):
-        image = ImageTk.PhotoImage(Image.open(src))
-        super().__init__(master, image=image)
-        self.image = image
-
-    def place(self, *args, **kwargs):
-        super().place(*args, **kwargs)
-        return self
-
-
-class DataRow(NamedTuple):
-    name: str
-    gender: str
-
-
-# *************************************************************************************************************
-class Window(Tk):
+class Window(tk.Tk):
     def __init__(self):
         super().__init__()
         self.resizable(True, True)
@@ -260,8 +180,8 @@ class Window(Tk):
         t20 = Label(f, text="2022", fg="white", bg="#0B2F3A", font=("tajawal", 14))
         t20.place(x=640, y=660)
 
-        i1 = IMG(f, p + "2.png").place(x=-4, y=0, width=200, height=220)
-        i2 = IMG(f, p + "0.png").place(x=1176, y=0, width=190, height=230)
+        Image(f, p + "2.png").place(x=-4, y=0, width=200, height=220)
+        Image(f, p + "0.png").place(x=1176, y=0, width=190, height=230)
 
         b = Button(
             f,
@@ -300,7 +220,7 @@ class Window(Tk):
     def next(self):
         self.screen.destroy()
         self.screen = self.home()
-        self.screen.pack(fill=BOTH, expand=True)
+        self.screen.pack(fill=tk.BOTH, expand=True)
 
     def home(self):
         f = Frame(self, bg="#0B2F3A", borderwidth=1)
@@ -355,7 +275,7 @@ class Window(Tk):
         def f():
             self.screen.destroy()
             self.screen = func()
-            self.screen.pack(fill=BOTH, expand=True)
+            self.screen.pack(fill=tk.BOTH, expand=True)
 
         return f
 
@@ -471,12 +391,6 @@ class Window(Tk):
         return f
 
     # ***********************************************************
-    def save_data(self, data):
-        wb = Workbook("data.xlsx")
-        ws = wb.add_worksheet()
-        ws.write("B2", data.name)
-        ws.write("C2", data.gender)
-        wb.close()
 
     # ***********************************************************
     def Add_land(self):  # static scope
@@ -544,8 +458,7 @@ class Window(Tk):
         e5.place(x=106, y=360)
 
         def save_data():
-            data = DataRow(e1.get(), gender)
-            self.save_data(data)
+            pass
 
         b7 = Button(
             f1,
@@ -579,19 +492,13 @@ class Window(Tk):
         cal.place(x=100, y=270)
 
         def country_changed(*args):
-            self.gov = StringVar()
-            values = list(options[self.country.get()].keys())
-            c = ttk.Combobox(
-                f1, width=11, values=values, textvariable=self.gov, font="tajawal"
-            )
-            c.place(x=120, y=150)
-            self.gov.trace("w", gov_changed)
+            pass
 
         self.country = StringVar()
         c = ttk.Combobox(
             f1,
             width=5,
-            values=list(options.keys()),
+            values=list(location_options.keys()),
             textvariable=self.country,
             font="tajawal",
         )
@@ -599,13 +506,7 @@ class Window(Tk):
         self.country.trace("w", country_changed)
 
         def gov_changed(*args):
-            self.city = StringVar()
-            values = options[self.country.get()][self.gov.get()]
-            c = ttk.Combobox(
-                f1, width=5, values=values, textvariable=self.city, font="tajawal"
-            )
-            c.place(x=50, y=180)
-            # self.city.trace('w', self.gov_changed)
+            pass
 
         # *****************************الاطار الثانى*****************************************
         t = Label(f2, text="Fild data", fg="red", bg="gold", font=("tajawal", 14))
@@ -746,8 +647,8 @@ class Window(Tk):
                 width=9,
                 bd=3,
                 justify="center",
-                relief=SUNKEN,
-                textvariable=sys.displayhook,
+                relief=tk.SUNKEN,
+                # textvariable=sys.displayhook,
             )
             e9.place(x=39, y=231)
 
@@ -782,7 +683,7 @@ class Window(Tk):
             e22 = Entry(f1, width=9, bd=3, justify="center")
             e22.place(x=55, y=653)
 
-            t2s.place(x=100, y=25)
+            # t2s.place(x=100, y=25)
             t3s = Label(
                 f1, text="MJ.m\u00b2/day", fg="black", bg="gold", font=("tajawal", 14)
             )
@@ -825,7 +726,7 @@ class Window(Tk):
             t21s = Label(f1, text="dS/m", fg="black", bg="gold", font=("tajawal", 14))
             t21s.place(x=120, y=621)
 
-        listbox = Listbox(
+        listbox = tk.Listbox(
             f2,
             width=30,
             height=5,
@@ -839,16 +740,16 @@ class Window(Tk):
             n = name.get()
             if not n:
                 return
-            listbox.insert(END, n)
+            listbox.insert(tk.END, n)
             name.set("")
 
         def delete():
-            listbox.delete(ANCHOR)
+            listbox.delete(tk.ANCHOR)
 
-        b6 = tk.Button(
+        tk.Button(
             f2, text="Add", font=("tajawal"), bd=3, fg="black", bg="red", command=add
         ).place(x=0, y=60)
-        b6 = tk.Button(
+        tk.Button(
             f2,
             text="Delete",
             font=("tajawal"),
@@ -873,16 +774,16 @@ class Window(Tk):
     # def
 
     def add(self):
-        li = Listbox(self, width=30, height=5)
-        li.insert(END, n)
+        name = tk.StringVar()
+        n = name.get()
+        li = tk.Listbox(self, width=30, height=5)
+        li.insert(tk.END, n)
         li.place(x=0, y=300)
         e1 = tk.Entry(
             self, width=32, bd=3, fg="black", justify="center", textvariable=name
         )  # justify='right',height=1
         e1.place(x=95, y=30)
-        n = name.get()
 
-        name = tk.StringVar()
 
         # li.insert(ANCHOR)
 
@@ -1096,20 +997,13 @@ class Window(Tk):
         # textarea.heading('name',text='الاسم')
         # textarea.heading('name',text='الاسم')
 
-        name_var = StringVar()
-        telephon_var = StringVar()
-        National_ID_var = StringVar()
-        Home_Address_var = StringVar()
-        field_ID_var = StringVar()
-        areaa_var = StringVar()
-        irrigation_period_var = StringVar()
+
 
         # *************************************************************************************************************************
 
         self.line_numbers = tk.Text(self, bg="grey", fg="white")
-        first_100_numbers = [str(n + 1) for n in range(100)]
 
-        menu = tk.Menu(self, bg="lightgrey", fg="black")
+        self.menu = tk.Menu(self, bg="lightgrey", fg="black")
         sub_menu_items = ["file", "edit", "tools", "help"]
         self.generate_sub_menus(sub_menu_items)
         self.configure(menu=self.menu)
@@ -1128,7 +1022,7 @@ class Window(Tk):
         my_methods = [method for method in set(window_methods) - set(tkinter_methods)]
         my_methods = sorted(my_methods)
         for item in sub_menu_items:
-            sub_menu = tk.Menu(Menu, tearoff=0, bg="lightgrey", fg="black")
+            sub_menu = tk.Menu(self.menu, tearoff=0, bg="lightgrey", fg="black")
             matching_methods = []
             for method in my_methods:
                 if method.startswith(item):
@@ -1144,10 +1038,8 @@ class Window(Tk):
                         )
                         self.menu.add_cascade(label=item.title(), menu=sub_menu)
 
-        self.right_click_menu = Menu(self, bg="lightgrey", fg="black", tearoff=0)
-        self.right_click_menu.add_command(label="Cut", command=self.edit_cut)
-        self.right_click_menu.add_command(label="Copy", command=self.edit_copy)
-        self.right_click_menu.add_command(label="Paste", command=self.edit_paste)
+        self.right_click_menu = tk.Menu(self, bg="lightgrey", fg="black", tearoff=0)
+
 
     def cut(self, event=None):
         self.event_generate("<<Cut>>")
@@ -1163,33 +1055,6 @@ class Window(Tk):
     # self.bind('<Control-v>', self.paste)
     # self.bind('<Control-x>', self.cut)
 
-    def edit_copy(self, event=None):
-        """
-        Ctrl+C
-        """
-        self.textarea.event_generate("<Control-c>")
-
-    def edit_cut(self, event=None):
-        """
-        Ctrl+X
-        """
-        self.textarea.event_generate("<Control-x>")
-        self.line_numbers.force_update()
-
-    def edit_paste(self, event=None):
-        """
-        Ctrl+V
-        """
-        self.textarea.event_generate("<Control-v>")
-        self.line_numbers.force_update()
-        self.highlighter.force_highlight()
-
-    def force_highlight(self):
-        self.highlight()
-
-    # class LineNumbers(tk.Text):
-    def force_update(self):
-        self.on_key_press()
 
     # ****************************************************************************************************************************************************
     def shose_crops(self):
@@ -1312,8 +1177,8 @@ class Window(Tk):
             width=9,
             bd=3,
             justify="center",
-            relief=SUNKEN,
-            textvariable=sys.displayhook,
+            relief=tk.SUNKEN,
+            # textvariable=sys.displayhook,
         )
         e9.place(x=39, y=231)
 
@@ -1648,71 +1513,24 @@ class Window(Tk):
         # con = sqlite3.connector(host='localhost',user='root',password='',database='EDB_App')
         # cur = con.execute('select * from EDB_App')
         # rows=
-        table.bind("ButtonRelease,show")
+        # self.table.bind("ButtonRelease,show")
 
-    def add(self):
-        con = sqlite3.connector(
-            host="localhost", user="root", password="", database="EDB_App"
-        )
-        cur = con.cursor()
-        if (
-            len(name_var.get()) == 0
-            or len(telephon_var.get()) == 0
-            or len(National_ID_var.get()) == 0
-        ):
-            mb.showerror("error", "all data should be required")
-        else:
-            cur.execute(
-                "insert into EDB values($s,$s,$s,$s,$s,$s,$s)",
-                (name_var.get(), telephon_var.get(), National_ID_var.get()),
-            )
-            con.commit()
-            con.close()
-            mb.showinfo("successfully added , data inserted successfuly")
-            name_var.delet(0, "end")
-            telephon_var.delet(0, "end")
-            National_ID_var.delet(0, "end")
-            # read.()
 
-    def read(self):
-        con = sqlite3.connector(
-            host="localhost", user="root", password="", database="EDB_App"
-        )
-        cur = con.cursor()
-        cur.execute("select * from student")
-        myresults = cur.fetchall()
-        Table.delete(*table.get_children())
-        for res in myresults:
-            Table.insert("", "end", Values=res)
-        con.close()
 
-    def show(self, ev):
-        data = table.focus()
-        alldata = table.item(data)
-        val = alldata["values"]
-        name.set(val[1])
-        last.set(val[2])
-        cin.set(val[3])
-        emall.set(val[4])
+
 
     def close(self):
         self.screen.destroy()
 
 
-class TextArea(tk.Text):
-    def __init__(self, master, **kwargs):
-        super().__init__(**kwargs)
-        master = master
-        self.config(wrap=tk.WORD)
-        screen = self.start()
-        screen.pack(fill=BOTH, expand=True)
+
 
 
 class MainWindow(tk.Tk):
     def __init__(self):
         super().__init__()
-        text_area = TextArea(self, bg="white", fg="black", undo=True)
-        scrollbar = ttk.Scrollbar(orient="vertical", command=self.scroll_text)
+        text_area = tk.Text(self, bg="white", fg="black", undo=True)
+        scrollbar = ttk.Scrollbar(orient="vertical")
         text_area.configure(yscrollcommand=scrollbar.set)
         scrollbar.pack(side=tk.LEFT, fill=tk.Y)
         text_area.pack(side=tk.LEFT, fill=tk.BOTH, expand=1)

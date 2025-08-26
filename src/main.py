@@ -1,14 +1,12 @@
-from tkinter import *
-from widgets.paragraph import Paragraph
-
-path = "g:\\New folder\\Egyptian Development Bank\\icon\\"
+import tkinter as tk
+from tkinter import Frame, Button
 
 
 class Colors:
     blue = "#0B2F3A"
 
 
-class Window(Tk):
+class Window(tk.Tk):
     def __init__(self):
         super().__init__()
 

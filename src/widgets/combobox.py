@@ -51,6 +51,8 @@ def dd(*args):
         c.place(x=120, y=150)
 
         def ww(*args):
+            nonlocal st1
+
             for m in qw.grid_slaves(1):
                 m.grid_remove()
             if st1.get() == "Alexandria":
@@ -110,6 +112,6 @@ def dd(*args):
         c.place(x=120, y=150)
 
 
-st.trace("w", dd)
+st.trace_add("write", dd)
 # st.trace('m',ww)
 qw.mainloop()

@@ -1,4 +1,16 @@
-from tkinter import *
+from tkinter import (
+    Tk,
+    Frame,
+    Button,
+    Scrollbar,
+    BOTH,
+    HORIZONTAL,
+    X,
+    Y,
+    LEFT,
+    BOTTOM,
+    VERTICAL,
+)
 from tkinter import ttk
 
 
@@ -90,7 +102,7 @@ class Window(Tk):
         xscroll.config(command=tree.xview)
         yscroll.config(command=tree.yview)
 
-        tree.heading("1", text="الاسم", width=130)
+        tree.heading("1", text="الاسم")
         tree.heading("2", text="التليفون")
         tree.heading("3", text="الرقم القومى")
         tree.heading("4", text="عنوان المنزل")

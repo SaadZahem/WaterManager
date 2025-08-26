@@ -1,7 +1,4 @@
-from json import load
 from typing import NamedTuple
-import numpy as np
-import pandas as pd
 from openpyxl import Workbook, load_workbook
 
 path = "G:\\New folder\\Egyptian Development Bank\\data\\"
@@ -29,6 +26,7 @@ class UserDataStorage(object):
         except FileNotFoundError:
             cls.file = Workbook(write_only=False)
             sheet = cls.file.active
+            assert sheet is not None
             sheet["A1"] = "No."
             sheet["B1"] = "Name"
             sheet["C1"] = "Gender"
@@ -42,11 +40,15 @@ class UserDataStorage(object):
 
     @classmethod
     def _save(cls):
+        assert cls.file is not None
         cls.file.save(filename=cls.filename)
 
     @classmethod
     def patch(cls, user: UserData):
+        assert cls.file is not None
         ws = cls.file.active
+        assert ws is not None
+        i = 0
         for i, cell in enumerate(ws["B"], start=1):
             if i == 1:
                 continue

@@ -2,7 +2,7 @@
 from openpyxl import Workbook
 
 workbook = Workbook()
-sheet = workbook.active
+sheet = workbook.active or quit(1)
 
 sheet["A1"] = "hello"
 sheet["B1"] = "world!"

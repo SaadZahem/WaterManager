@@ -1,7 +1,5 @@
-from ast import Delete
 import tkinter as tk
-from tkinter import *
-from turtle import color
+from tkinter import Listbox, END, ANCHOR
 
 qw = tk.Tk()
 qw.geometry("500x500")
