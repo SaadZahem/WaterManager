@@ -6,7 +6,7 @@ def esat(t: float):
     return 0.6108 * math.exp((17.27 * t) / (t + 237.3))
 
 
-def j(m: int, d: int | None = None, leap: bool = False) -> float:
+def j(m: int, d: int | None = None, leap: bool = False) -> int:
     """Calculate day of the year."""
     if d is not None:
         x = 0 if m <= 2 else -2 + int(leap)
