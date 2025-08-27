@@ -7,12 +7,19 @@ from ..logic.etrcalc import calculate_reference_evapotranspiration as etr, j as 
 
 class RefETFrame(ttk.Frame):
     def __init__(self, master: tk.Misc):
+        """Creates the UI and links"""
         super().__init__(master)
-        self.variables = {}
-        self.widgets = {}
-        self.mapping = {}
-        self.outcome = {}
 
+        # links
+        self.variables = {}  # str -> head var, (str, row) -> body var
+        self.widgets = {}  # widget name -> row
+        self.argsmap = {}  # required key -> valid param
+        self.outcome = {}  # row -> output label var
+
+        # styles
+        #
+        # note that this can't be moved to the top as the Tk widget must be
+        # initialized before using fonts
         from .styles import bold_font
 
         # head
@@ -25,10 +32,11 @@ class RefETFrame(ttk.Frame):
             "latitude": 2,
             "longitude": 2,
         }
-        self.mapping.update(altitude="z", latitude="lat")
+        self.argsmap.update(altitude="z", latitude="lat")
         index = 0
         for label, span in dimensions.items():
             row, column = divmod(index, 12)
+            self.variables[label] = var = tk.StringVar()
 
             ttk.Label(head, text=label.title(), font=bold_font).grid(
                 column=column,
@@ -36,18 +44,19 @@ class RefETFrame(ttk.Frame):
                 columnspan=span,
                 sticky="E",
             )
-            self.variables[label] = var = tk.StringVar()
             ttk.Entry(head, textvariable=var, justify="center").grid(
                 column=column + span,
                 row=row,
                 columnspan=span,
                 sticky="W",
             )
-            var.trace_add("write", lambda *_: self.action())
 
+            var.trace_add("write", lambda *_: self.action())
             index += 2 * span
 
         head.grid(row=0, sticky="NEW")
+
+        # separator
         ttk.Separator(self, orient="horizontal").grid(row=1, pady=8, sticky="ew")
 
         # body
@@ -60,7 +69,7 @@ class RefETFrame(ttk.Frame):
             "Sun (hour)": "sun_hours",
         }
         outputs = {"ETr (mm/day)": ""}
-        self.mapping.update({v: v for v in inputs.values()})
+        self.argsmap.update({v: v for v in inputs.values()})
         loop = {
             "": lambda r: date(date.today().year, r, 1).strftime("%B"),
             **inputs,
@@ -103,15 +112,20 @@ class RefETFrame(ttk.Frame):
         body.grid(row=2, sticky="SEW")
 
     def validate(self, newvalue: str, widgetname: str) -> bool:
+        """Validate command for entries."""
         valid = self.validate_float(newvalue)
+        row = self.widgets[widgetname]
 
         if valid:
-            self.action(self.widgets[widgetname])
+            self.action(row)
+        else:
+            self.outcome[row].set("")
 
         return valid
 
     @staticmethod
     def validate_float(value: str) -> bool:
+        """Return true if the value is convertable to float."""
         try:
             float(value)
         except ValueError:
@@ -120,6 +134,8 @@ class RefETFrame(ttk.Frame):
             return True
 
     def action(self, row: int | None = None):
+        """Validate all rows in the table, calculate the result, and update the corresponding label."""
+
         if row is None:
             iterable = range(1, 13)
         else:
@@ -127,7 +143,9 @@ class RefETFrame(ttk.Frame):
 
         for row in iterable:
             args = {}
-            for key, param in self.mapping.items():
+            value = ""
+
+            for key, param in self.argsmap.items():
                 if key in self.variables:
                     var = self.variables[key]
                     valid = self.validate_float(var.get())
@@ -140,13 +158,13 @@ class RefETFrame(ttk.Frame):
                 else:
                     break
             else:
-                set = self.outcome[row].set
                 try:
-                    value = etr(doy(row), **args)
+                    result = etr(doy(row), **args)
+                    value = format(result, ".5f")
                 except ValueError:
-                    set("")
-                else:
-                    set(format(value, ".4f"))
+                    pass
+
+            self.outcome[row].set(value)
 
 
 if __name__ == "__main__":
