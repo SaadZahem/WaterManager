@@ -27,13 +27,13 @@ class DataTable(Scrollable):
         self.headers = headers
         self.callback = callback
         self.output_count = output_count
+        self.blanks = blanks
 
         self.rows: list[dict] = []  # keep references to widgets per row
         self._build_header()
-        
+
         for i in range(blanks):
             self._build_blank_row(-~i)
-        
 
     def _build_header(self):
         """Create header row with labels."""
@@ -49,6 +49,7 @@ class DataTable(Scrollable):
         for j, text in enumerate(all_headers):
             lbl = ttk.Label(self.frame, text=text, style="Heading.TLabel")
             lbl.grid(row=0, column=j, sticky="nsew", padx=2, pady=2)
+            self.frame.grid_columnconfigure(j, weight=1)
 
     def populate(self, start: date, end: date):
         """Replace existing rows with new ones for given date range."""
@@ -65,9 +66,9 @@ class DataTable(Scrollable):
             self._build_row(i, current)
             i += 1
             current += timedelta(days=1)
-        
+
         self._adjust_size()
-        
+
     def _adjust_size(self) -> None:
         self.update_idletasks()
         dim = self.select("width", "height")
@@ -76,7 +77,7 @@ class DataTable(Scrollable):
     def _build_blank_row(self, row: int):
         """Build a blank row of the table."""
         widgets = []
-        
+
         for column in range(3 + len(self.headers)):
             blank = ttk.Label(self.frame, text="-", anchor="center")
             blank.grid(row=row, column=column, sticky="news", padx=2, pady=2)
@@ -100,17 +101,10 @@ class DataTable(Scrollable):
         doy = current_date.timetuple().tm_yday
         date_str = current_date.strftime("%Y-%m-%d")
 
-        lbl_day = ttk.Label(self.frame, text=day_name)
-        lbl_day.grid(row=row_index, column=0, sticky="nsew", padx=2, pady=2)
-        widgets.append(lbl_day)
-
-        lbl_doy = ttk.Label(self.frame, text=str(doy))
-        lbl_doy.grid(row=row_index, column=1, sticky="nsew", padx=2, pady=2)
-        widgets.append(lbl_doy)
-
-        lbl_date = ttk.Label(self.frame, text=date_str)
-        lbl_date.grid(row=row_index, column=2, sticky="nsew", padx=2, pady=2)
-        widgets.append(lbl_date)
+        for column, text in enumerate((day_name, str(doy), date_str)):
+            lbl = ttk.Label(self.frame, text=text)
+            lbl.grid(row=row_index, column=column, sticky="news", padx=2, pady=2)
+            widgets.append(lbl)
 
         # (b) numerical entries (all input columns)
         entries = []
@@ -118,7 +112,7 @@ class DataTable(Scrollable):
             e = ttk.Entry(self.frame, width=10)
             e.grid(row=row_index, column=3 + j, sticky="nsew", padx=2, pady=2)
 
-            def validate(event, entry=e):
+            def validate(event, entry=e, row=row_index):
                 val = entry.get().strip()
                 if val == "":
                     entry.configure(foreground="black")
@@ -128,9 +122,22 @@ class DataTable(Scrollable):
                     entry.configure(foreground="black")
                 except ValueError:
                     entry.configure(foreground="red")
-                self._check_row_complete(row_index)
+                self._check_row_complete(row)
 
             e.bind("<FocusOut>", validate)
+            e.bind("<Return>", self._on_enter)
+            e.bind("<Tab>", self._on_enter)
+            for event, (handler, steps) in dict(
+                up=(self._move_vertically, -1),
+                down=(self._move_vertically, 1),
+                left=(self._move_horizontally, -1),
+                right=(self._move_horizontally, 1),
+            ).items():
+                e.bind(
+                    f"<{event.title()}>",
+                    lambda e, r=row_index, c=j: handler(e, r, c, steps),
+                )
+
             entries.append(e)
             widgets.append(e)
 
@@ -157,6 +164,25 @@ class DataTable(Scrollable):
             }
         )
 
+    @staticmethod
+    def _on_enter(event: tk.Event) -> Literal["break"]:
+        event.widget.tk_focusNext().focus()  # type: ignore
+        return "break"  # prevent default ding sound
+
+    def _move_horizontally(
+        self, _event: tk.Event, row: int, column: int, steps: int
+    ) -> Literal["break"]:
+        self.rows[~-row]["entries"][
+            (column + steps) % (len(self.headers) - self.output_count)
+        ].focus()
+        return "break"  # prevent default ding sound
+
+    def _move_vertically(
+        self, _event: tk.Event, row: int, column: int, steps: int
+    ) -> Literal["break"]:
+        self.rows[(~-row + steps) % len(self.rows)]["entries"][column].focus()
+        return "break"  # prevent default ding sound
+
     def _check_row_complete(self, row_index: int):
         """Check if all entries are valid, then call callback."""
         row = self.rows[row_index - 1]  # adjust for header row
@@ -182,6 +208,7 @@ class DataTable(Scrollable):
 if __name__ == "__main__":
     root = tk.Tk()
     root.title("DataTable Example")
+    root.grid_columnconfigure(0, weight=1)
 
     def on_row_complete(doy, values):
         print(f"Row complete for DOY {doy}: {values}")
