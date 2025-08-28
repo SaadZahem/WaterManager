@@ -1,3 +1,4 @@
+import functools
 import tkinter as tk
 from tkinter import ttk
 from datetime import date, timedelta
@@ -47,7 +48,9 @@ class DataTable(Scrollable):
         all_headers = base_headers + input_headers + output_headers
 
         for j, text in enumerate(all_headers):
-            lbl = ttk.Label(self.frame, text=text, style="Heading.TLabel", anchor="center")
+            lbl = ttk.Label(
+                self.frame, text=text, style="Heading.TLabel", anchor="center"
+            )
             lbl.grid(row=0, column=j, sticky="nsew", padx=2, pady=2)
             self.frame.grid_columnconfigure(j, weight=1)
 
@@ -114,7 +117,7 @@ class DataTable(Scrollable):
             e = ttk.Entry(self.frame, width=10)
             e.grid(row=row_index, column=3 + j, sticky="nsew", padx=2, pady=2)
 
-            def validate(event, entry=e, row=row_index):
+            def validate(_event, entry=e, row=row_index):
                 val = entry.get().strip()
                 if val == "":
                     entry.configure(foreground="black")
@@ -129,15 +132,12 @@ class DataTable(Scrollable):
             e.bind("<FocusOut>", validate)
             e.bind("<Return>", self._on_enter)
             e.bind("<Tab>", self._on_enter)
-            for event, (handler, steps) in dict(
-                up=(self._move_vertically, -1),
-                down=(self._move_vertically, 1),
-                left=(self._move_horizontally, -1),
-                right=(self._move_horizontally, 1),
-            ).items():
+
+            # Bind arrow keys
+            for event in {"Up", "Right", "Down", "Left"}:
                 e.bind(
-                    f"<{event.title()}>",
-                    lambda e, r=row_index, c=j: handler(e, r, c, steps),
+                    f"<{event}>",
+                    functools.partial(self._on_arrow, row=row_index, column=j),
                 )
 
             entries.append(e)
@@ -171,19 +171,20 @@ class DataTable(Scrollable):
         event.widget.tk_focusNext().focus()  # type: ignore
         return "break"  # prevent default ding sound
 
-    def _move_horizontally(
-        self, _event: tk.Event, row: int, column: int, steps: int
-    ) -> Literal["break"]:
-        self.rows[~-row]["entries"][
-            (column + steps) % (len(self.headers) - self.output_count)
-        ].focus()
-        return "break"  # prevent default ding sound
+    def _on_arrow(self, event: tk.Event, *, row: int, column: int) -> Literal["break"]:
+        w = len(self.headers) - self.output_count
+        h = len(self.rows)
+        i = ~-row * w + column
+        i += {
+            "Up": -w,
+            "Down": w,
+            "Left": -1,
+            "Right": 1,
+        }[event.keysym]
+        r, c = divmod(i, w)
 
-    def _move_vertically(
-        self, _event: tk.Event, row: int, column: int, steps: int
-    ) -> Literal["break"]:
-        self.rows[(~-row + steps) % len(self.rows)]["entries"][column].focus()
-        return "break"  # prevent default ding sound
+        self.rows[r % h]["entries"][c].focus()
+        return "break"
 
     def _check_row_complete(self, row_index: int):
         """Check if all entries are valid, then call callback."""
