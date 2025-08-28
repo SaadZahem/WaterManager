@@ -11,7 +11,7 @@ class DataTable(Scrollable):
 
     def __init__(
         self,
-        parent,
+        parent: tk.Misc,
         headers: list[str],
         callback: Callable[[int, list[float]], None],
         output_count: int = 1,

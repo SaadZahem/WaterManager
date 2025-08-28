@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import ttk
 from typing import NamedTuple, Callable
 
-from ..widgets.scrollable import Scrollable
+from ..widgets.datatable import DataTable
 
 
 class InputItem[T](NamedTuple):
@@ -83,100 +83,43 @@ class GIRFrame(ttk.Frame):
         )
 
         # body
-        scroll = Scrollable(self)
-        scroll.grid(row=0, column=2, sticky="NEWS")
-        scroll.scrollbar.grid(row=0, column=3, sticky="NS")
-
-        body = scroll.frame
-        inputs = {
-            "Zr": "",
-            "TAW": "",
-            "RAW": "",
-            "ETa (mm/day)": "",
-            "Precipitation (mm/day)": "",
-            "Di": "",
-            "LR": "",
-            "R (on/off)": False,
-        }
-        outputs = {
-            "F": "",
-            "Dg": "",
-            "GIR": "",
-        }
-        loop = {
-            "": lambda r: current + timedelta(days=~-r),
-            **inputs,
-            **outputs,
-        }
-        current = date.today()
-        for row in range(61):
-            for column, (key, value) in enumerate(loop.items(), start=2):
-                if row == 0:
-                    widgets = [ttk.Label(body, text=key, font=bold_font)]
-
-                elif key in inputs:
-                    variable = tk.StringVar()
-                    widgets = [
-                        ttk.Entry(
-                            body,
-                            justify="center",
-                            validate="focusout",
-                            # validatecommand=(self.register(self.validate), "%P", "%W"),
-                            textvariable=variable,
-                            width=8,
-                        )
-                    ]
-                    # self.variables[value, row] = variable
-                    # self.widgets[str(widget)] = row
-
-                elif column == 2:
-                    widgets = [
-                        ttk.Label(
-                            body,
-                            text=value(row).strftime("%a"),
-                            style="Const.TLabel",
-                            anchor="center",
-                        ),
-                        ttk.Label(
-                            body,
-                            text=value(row).strftime("%j"),
-                            style="Const.TLabel",
-                            anchor="center",
-                        ),
-                        ttk.Label(
-                            body, text=value(row), style="Const.TLabel", anchor="center"
-                        ),
-                    ]
-                    column = 0
-                else:
-                    variable = tk.StringVar()
-                    widgets = [
-                        ttk.Label(
-                            body,
-                            text=value,
-                            style="Output.TLabel",
-                            textvariable=variable,
-                            anchor="center",
-                        )
-                    ]
-                    # self.outcome[row] = variable
-
-                for i, widget in enumerate(widgets, column):
-                    widget.grid(row=row, column=i, sticky="NEWS", ipadx=5)
+        headers = [
+            "TAW",
+            "RAW",
+            "ETa (mm/day)",
+            "Precipitation (mm/day)",
+            "Di",
+            "LR",
+            "R (on/off)",
+            "F",
+            "Dg",
+            "GIR",
+        ]
+        self.table = DataTable(self, headers, callback=self.verify_all, output_count=3)
+        self.table.grid(row=0, column=2, sticky="NEWS")
+        self.table.scrollbar.grid(row=0, column=3, sticky="NS")
 
         # Ensure all elements are visible at once
-        self.update()
-        scroll.configure(width=body.winfo_reqwidth())
+        self.update_idletasks()
+        self.table.configure(width=self.table.frame.winfo_reqwidth())
 
     def verify_dates(self, event):
         plant, harvest = self.dates
+        start = plant.get_date()
+        end = harvest.get_date()
 
-        if plant.get_date() < harvest.get_date():
+        if start < end:
+            self.table.populate(start, end)
+            self.table.configure(width=self.table.frame.winfo_reqwidth())
+            self.winfo_toplevel().geometry("")  # ignore user selected size
             msg = ""
         else:
             msg = "Error:\nharvest date must be after plant date"
 
         self.head_details["errmsg"].configure(text=msg)
+    
+    def verify_all(self, doy: int, values: list[float]):
+        pass
 
 
 if __name__ == "__main__":
