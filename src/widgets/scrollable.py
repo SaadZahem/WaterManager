@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from typing import Literal
+from typing import Literal, Callable
 
 from .debounce import debounce
 
@@ -16,14 +16,14 @@ class Scrollable(tk.Canvas):
     ) -> None:
         super().__init__(parent, highlightthickness=0, **kw)
 
-        self.orient = orient
+        self._orient: Literal["horizontal", "vertical"] = orient
         self.frame = ttk.Frame(self)  # inner frame
         self._window = self.create_window((0, 0), window=self.frame, anchor="nw")
 
         # Scrollbar (but not placed yet)
         self.scrollbar = ttk.Scrollbar(parent, orient=orient, command=self.view)
         self.configure({self.select(*"yx") + "scrollcommand": self.scrollbar.set})
-        
+
         # Copy bg from the inner themed frame
         bg = ttk.Style().lookup("TFrame", "background")
         self.configure(background=bg)
@@ -37,23 +37,30 @@ class Scrollable(tk.Canvas):
             self.bind_all(f"<{event}>", self._on_mousewheel)
 
     def select[T](self, ifvertical: T, ifhorizontal: T) -> T:
-        return ifhorizontal if self.orient == "horizontal" else ifvertical
+        """Choose between two values based on current orientation."""
+        return ifhorizontal if self._orient == "horizontal" else ifvertical
+
+    @property
+    def orient(self) -> Literal["horizontal", "vertical"]:
+        return self._orient
 
     @property
     def view_scroll(self):
-        return self.xview_scroll if self.orient == "horizontal" else self.yview_scroll
+        return self.xview_scroll if self._orient == "horizontal" else self.yview_scroll
 
     @property
-    def view(self):
-        return self.xview if self.orient == "horizontal" else self.yview
+    def view(self) -> Callable[[], tuple[float, float]]:
+        return self.xview if self._orient == "horizontal" else self.yview
 
     @debounce(1000)
-    def _update_scrollregion(self, event=None):
+    def _update_scrollregion(self, _event: tk.Event) -> None:
+        """React to content frame resizing by updating the scrollregion."""
         self.configure(scrollregion=self.bbox("all"))
         self._check_scrollbar()
 
     @debounce(50)
-    def _resize_canvas(self, event=None):
+    def _resize_canvas(self, _event: tk.Event) -> None:
+        """React to canvas resizing. Match content size with canvas size."""
         dim = self.select("width", "height")
         inner_size = getattr(self.frame, f"winfo_req{dim}")()
         self_size = getattr(self, f"winfo_{dim}")()
@@ -65,7 +72,8 @@ class Scrollable(tk.Canvas):
 
         self._check_scrollbar()
 
-    def _check_scrollbar(self, event=None):
+    def _check_scrollbar(self) -> None:
+        """Show or hide the scrollbar depending on content size."""
         dim = self.select("height", "width")
         frame_size = getattr(self.frame, f"winfo_req{dim}")()
         canvas_size = getattr(self, f"winfo_{dim}")()
@@ -74,7 +82,8 @@ class Scrollable(tk.Canvas):
         if need_scroll != self.scrollbar.winfo_ismapped():
             self.scrollbar.grid() if need_scroll else self.scrollbar.grid_remove()
 
-    def _on_mousewheel(self, event) -> None:
+    def _on_mousewheel(self, event: tk.Event) -> None:
+        """React to mousewheel by scrolling. Only when the scrollbar is visible."""
         if not self.scrollbar.winfo_ismapped():
             return
         if event.num == 4:  # Linux scroll up

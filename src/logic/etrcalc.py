@@ -14,7 +14,7 @@ def j(m: int, d: int | None = None, leap: bool = False) -> int:
 
     # return the middle day of the month if the day parameter wasn't specified
     days_in_month = [31, 29 if leap else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
-    return sum(days_in_month[:m - 1]) + days_in_month[m - 1] // 2
+    return sum(days_in_month[: m - 1]) + days_in_month[m - 1] // 2
 
 
 def calculate_reference_evapotranspiration(

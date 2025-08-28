@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from tkinter import ttk, messagebox, Label, Frame, Entry, Button, StringVar
 from urllib import response
@@ -7,7 +6,6 @@ from tkcalendar import DateEntry
 
 from .models import location_options
 from .widgets import DataTable, Image
-
 
 
 p = "icon/"
@@ -784,7 +782,6 @@ class Window(tk.Tk):
         )  # justify='right',height=1
         e1.place(x=95, y=30)
 
-
         # li.insert(ANCHOR)
 
     # *********************************************
@@ -997,8 +994,6 @@ class Window(tk.Tk):
         # textarea.heading('name',text='الاسم')
         # textarea.heading('name',text='الاسم')
 
-
-
         # *************************************************************************************************************************
 
         self.line_numbers = tk.Text(self, bg="grey", fg="white")
@@ -1040,7 +1035,6 @@ class Window(tk.Tk):
 
         self.right_click_menu = tk.Menu(self, bg="lightgrey", fg="black", tearoff=0)
 
-
     def cut(self, event=None):
         self.event_generate("<<Cut>>")
 
@@ -1054,7 +1048,6 @@ class Window(tk.Tk):
     # self.bind('<Control-c>', self.copy)
     # self.bind('<Control-v>', self.paste)
     # self.bind('<Control-x>', self.cut)
-
 
     # ****************************************************************************************************************************************************
     def shose_crops(self):
@@ -1515,15 +1508,8 @@ class Window(tk.Tk):
         # rows=
         # self.table.bind("ButtonRelease,show")
 
-
-
-
-
     def close(self):
         self.screen.destroy()
-
-
-
 
 
 class MainWindow(tk.Tk):

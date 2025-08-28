@@ -19,7 +19,7 @@ class GIRFrame(ttk.Frame):
         "Rice",
     ]
 
-    def __init__(self, master: tk.Misc):
+    def __init__(self, master: tk.Misc) -> None:
         super().__init__(master)
 
         self.columnconfigure(2, weight=1)
@@ -104,7 +104,7 @@ class GIRFrame(ttk.Frame):
         self.update_idletasks()
         self.table.configure(width=self.table.frame.winfo_reqwidth())
 
-    def verify_dates(self, event):
+    def verify_dates(self, _event: tk.Event) -> None:
         plant, harvest = self.dates
         start = plant.get_date()
         end = harvest.get_date()
@@ -119,7 +119,7 @@ class GIRFrame(ttk.Frame):
 
         self.head_details["errmsg"].configure(text=msg)
 
-    def verify_all(self, doy: int, values: list[float]):
+    def verify_all(self, doy: int, values: list[float]) -> None:
         pass
 
 

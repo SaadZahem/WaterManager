@@ -19,7 +19,7 @@ class DataTable(Scrollable):
         orient: Literal["horizontal", "vertical"] = "vertical",
         blanks: int = 15,
         **kwargs,
-    ):
+    ) -> None:
         super().__init__(parent, orient=orient, **kwargs)
         assert output_count <= len(headers), (
             "output_count cannot exceed number of headers"
@@ -36,7 +36,7 @@ class DataTable(Scrollable):
         for i in range(blanks):
             self._build_blank_row(-~i)
 
-    def _build_header(self):
+    def _build_header(self) -> None:
         """Create header row with labels."""
         # Date columns first
         base_headers = ["Day", "DOY", "Date"]
@@ -54,7 +54,7 @@ class DataTable(Scrollable):
             lbl.grid(row=0, column=j, sticky="news", padx=2, pady=2)
             self.frame.grid_columnconfigure(j, weight=1)
 
-    def populate(self, start: date, end: date):
+    def populate(self, start: date, end: date) -> None:
         """Replace existing rows with new ones for given date range."""
         # clear old rows
         for widgets in self.rows:
@@ -70,14 +70,7 @@ class DataTable(Scrollable):
             i += 1
             current += timedelta(days=1)
 
-        self._adjust_size()
-
-    def _adjust_size(self) -> None:
-        self.update_idletasks()
-        dim = self.select("width", "height")
-        self.configure({dim: getattr(self.frame, f"winfo_req{dim}")()})
-
-    def _build_blank_row(self, row: int):
+    def _build_blank_row(self, row: int) -> None:
         """Build a blank row of the table."""
         widgets = []
 
@@ -95,7 +88,7 @@ class DataTable(Scrollable):
             }
         )
 
-    def _build_row(self, row_index: int, current_date: date):
+    def _build_row(self, row_index: int, current_date: date) -> None:
         """Build a single row of the table."""
         widgets = []
 
@@ -191,7 +184,7 @@ class DataTable(Scrollable):
 
         self._check_row_complete(row)
 
-    def _check_row_complete(self, row_index: int):
+    def _check_row_complete(self, row_index: int) -> None:
         """Check if all entries are valid, then call callback."""
         row = self.rows[row_index - 1]  # adjust for header row
         values = []
@@ -206,7 +199,7 @@ class DataTable(Scrollable):
         # all valid
         self.callback(row["doy"], values)
 
-    def set_output(self, row_index: int, col_index: int, text: str):
+    def set_output(self, row_index: int, col_index: int, text: str) -> None:
         """Set or clear output label in given row."""
         row = self.rows[row_index - 1]  # adjust for header
         if 0 <= col_index < len(row["outputs"]):
