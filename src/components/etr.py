@@ -26,7 +26,8 @@ class RefETFrame(ttk.Frame):
 
         # head
         head = ttk.Frame(self)
-        head.columnconfigure(tuple(range(12)), weight=1)
+        head["padding"] = (0, 8, 0, 0)  # padding top
+        head.columnconfigure(tuple(range(12)), weight=1, pad=8)
         dimensions = {
             "country": 3,
             "governorate": 3,
@@ -120,11 +121,14 @@ class RefETFrame(ttk.Frame):
         """Validate command for entries."""
         valid = self.validate_float(newvalue)
         row = self.widgets[widgetname]
+        entry = self.nametowidget(widgetname)
 
         if valid:
             self.action(row)
+            entry.configure(style="TEntry")
         else:
             self.outcome[row].set("")
+            entry.configure(style="Invalid.TEntry")
 
         return valid
 

@@ -32,7 +32,7 @@ class GIRFrame(ttk.Frame):
         from .styles import bold_font
 
         # head
-        head = ttk.Frame(self)
+        head = ttk.Frame(self, padding=8)
         self.head_details = {
             "Crop": InputItem[str](choices=self.CROP_TYPES),
             "Plant Date": InputItem(factory=date),
@@ -54,6 +54,8 @@ class GIRFrame(ttk.Frame):
             "h": InputItem(float),
         }
         for row, (label, item) in enumerate(self.head_details.items()):
+            head.grid_rowconfigure(row, weight=1, pad=4)
+
             if isinstance(item, ttk.Widget):
                 item.grid(row=row, column=0, columnspan=3, sticky="WE", pady=8)
                 continue

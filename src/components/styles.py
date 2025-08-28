@@ -3,13 +3,16 @@ from tkinter import ttk, font
 
 bold_font = font.Font(family="Helvetica", size=8, weight="bold")
 
-s = ttk.Style()
+style = ttk.Style()
+style.theme_use("clam")
 
-s.configure("Thick.TSeparator", background="gray", borderwidth=5)
-s.configure("Const.TLabel", background="peru", relief="raised", font=bold_font)
-s.configure("Output.TLabel", background="grey50", borderwidth=5, relief="sunken")
+style.configure("Thick.TSeparator", background="gray", borderwidth=5)
+style.configure("Const.TLabel", background="peru", relief="raised", font=bold_font)
+style.configure("Output.TLabel", background="grey50", borderwidth=5, relief="sunken")
+style.configure("Invalid.TEntry", foreground="white", fieldbackground="red")
 
-s.map(
-    "TEntry",
-    foreground=[("invalid", "red")],
-)
+# style.map(
+#     "TEntry",
+#     foreground=[("invalid", "blue")],
+#     fieldbackground=[("invalid", "red")],  # use fieldbackground, not background
+# )
