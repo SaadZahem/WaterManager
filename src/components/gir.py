@@ -1,16 +1,21 @@
+from dataclasses import dataclass, field
 from datetime import date
+from functools import partial
 from tkcalendar import DateEntry
 import tkinter as tk
 from tkinter import ttk
-from typing import NamedTuple, Callable
+from typing import Callable
 
 from ..widgets.datatable import DataTable
 
 
-class InputItem[T](NamedTuple):
+@dataclass
+class InputItem:
     validate: Callable = str
     factory: Callable = str
-    choices: list[T] | None = None
+    choices: list[str] | None = None
+    var: tk.StringVar = field(default_factory=tk.StringVar)
+    valid = False
 
 
 class GIRFrame(ttk.Frame):
@@ -35,13 +40,15 @@ class GIRFrame(ttk.Frame):
         # head
         head = ttk.Frame(self, padding=8)
         self.head_details = {
-            "Crop": InputItem[str](choices=self.CROP_TYPES),
+            "Crop": InputItem(choices=self.CROP_TYPES),
             "Plant Date": InputItem(factory=date),
             "Harvest Date": InputItem(factory=date),
             "errmsg": ttk.Label(
                 head, anchor="center", foreground="red", font=bold_font
             ),
             "sep": ttk.Separator(head, orient="horizontal"),
+        }
+        self.required = {
             "Area (m²)": InputItem(float),
             "AW": InputItem(float),
             "Ece": InputItem(float),
@@ -54,6 +61,7 @@ class GIRFrame(ttk.Frame):
             "tx": InputItem(float),
             "h": InputItem(float),
         }
+        self.head_details.update(self.required)
         for row, (label, item) in enumerate(self.head_details.items()):
             head.grid_rowconfigure(row, weight=1, pad=4)
 
@@ -72,7 +80,17 @@ class GIRFrame(ttk.Frame):
                 widget.bind("<<DateEntrySelected>>", self.verify_dates)
                 self.dates.append(widget)
             else:
-                widget = ttk.Entry(head, justify="center")
+                widget = ttk.Entry(
+                    head,
+                    justify="center",
+                    textvariable=item.var,
+                    validate="focusout",
+                    validatecommand=(
+                        self.register(partial(self._validate, item=item)),
+                        "%P",
+                        "%W",
+                    ),
+                )
 
             widget.grid(row=row, column=1, sticky="W", columnspan=2)
 
@@ -104,6 +122,20 @@ class GIRFrame(ttk.Frame):
         self.update_idletasks()
         self.table.configure(width=self.table.frame.winfo_reqwidth())
 
+    def _validate(self, newvalue: str, widgetname: str, *, item: InputItem) -> bool:
+        entry = self.nametowidget(widgetname)
+
+        try:
+            item.validate(newvalue)
+        except ValueError:
+            item.valid = not newvalue
+            entry.configure(style="Invalid.TEntry")
+        else:
+            item.valid = True
+            entry.configure(style="TEntry")
+
+        return item.valid
+
     def verify_dates(self, _event: tk.Event) -> None:
         plant, harvest = self.dates
         start = plant.get_date()
@@ -119,8 +151,22 @@ class GIRFrame(ttk.Frame):
 
         self.head_details["errmsg"].configure(text=msg)
 
-    def verify_all(self, doy: int, values: list[float]) -> None:
-        pass
+    def verify_all(
+        self, doy: int, values: list[float], setv: Callable[[int, str], None]
+    ) -> None:
+        for item in self.required.values():
+            if item.valid:
+                values.insert(0, float(item.var.get()))  # type: ignore
+            else:
+                value = ""
+                break
+        else:
+            # compute the result
+            value = str(doy + sum(values))
+
+        # all the outputs are the same
+        for i in range(3):
+            setv(i, value)
 
 
 if __name__ == "__main__":

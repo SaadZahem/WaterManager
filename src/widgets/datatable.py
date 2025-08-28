@@ -14,7 +14,7 @@ class DataTable(Scrollable):
         self,
         parent: tk.Misc,
         headers: list[str],
-        callback: Callable[[int, list[float]], None],
+        callback: Callable[[int, list[float], Callable[[int, str], None]], None],
         output_count: int = 1,
         orient: Literal["horizontal", "vertical"] = "vertical",
         blanks: int = 15,
@@ -156,12 +156,7 @@ class DataTable(Scrollable):
         w = len(self.headers) - self.output_count
         h = len(self.rows)
         i = ~-row * w + column
-        i += {
-            "Up": -w,
-            "Down": w,
-            "Left": -1,
-            "Right": 1,
-        }[event.keysym]
+        i += {"Up": -w, "Down": w, "Left": -1, "Right": 1}[event.keysym]
         r, c = divmod(i, w)
 
         self.rows[r % h]["entries"][c].focus()
@@ -186,7 +181,7 @@ class DataTable(Scrollable):
 
     def _check_row_complete(self, row_index: int) -> None:
         """Check if all entries are valid, then call callback."""
-        row = self.rows[row_index - 1]  # adjust for header row
+        row = self.rows[~-row_index]  # adjust for header row
         values = []
         for e in row["entries"]:
             val = e.get().strip()
@@ -197,11 +192,13 @@ class DataTable(Scrollable):
             except ValueError:
                 return
         # all valid
-        self.callback(row["doy"], values)
+        self.callback(
+            row["doy"], values, partial(self.set_output, ~-row_index)
+        )  # adjust for header
 
     def set_output(self, row_index: int, col_index: int, text: str) -> None:
         """Set or clear output label in given row."""
-        row = self.rows[row_index - 1]  # adjust for header
+        row = self.rows[row_index]
         if 0 <= col_index < len(row["outputs"]):
             row["outputs"][col_index].config(text=text)
 
@@ -211,14 +208,13 @@ if __name__ == "__main__":
     root.title("DataTable Example")
     root.grid_columnconfigure(0, weight=1)
 
-    def on_row_complete(doy, values):
+    def on_row_complete(doy, values, setv):
         print(f"Row complete for DOY {doy}: {values}")
         # Example: output the sum & average
         total = sum(values)
         avg = total / len(values)
-        rel_index = doy - start.timetuple().tm_yday + 1
-        table.set_output(rel_index, 0, f"{total:.2f}")
-        table.set_output(rel_index, 1, f"{avg:.2f}")
+        setv(0, f"{total:.2f}")
+        setv(1, f"{avg:.2f}")
 
     start = date(2025, 8, 25)
     end = date(2025, 8, 28)

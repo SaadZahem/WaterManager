@@ -138,7 +138,7 @@ class RefETFrame(ttk.Frame):
         try:
             float(value)
         except ValueError:
-            return False
+            return not value
         else:
             return True
 
