@@ -10,6 +10,8 @@ class RefETFrame(ttk.Frame):
         """Creates the UI and links"""
         super().__init__(master)
 
+        self.columnconfigure(0, weight=1)
+
         # links
         self.variables = {}  # str -> head var, (str, row) -> body var
         self.widgets = {}  # widget name -> row
@@ -23,7 +25,7 @@ class RefETFrame(ttk.Frame):
         from .styles import bold_font
 
         # head
-        head = ttk.Frame(self, borderwidth="3")
+        head = ttk.Frame(self)
         head.columnconfigure(tuple(range(12)), weight=1)
         dimensions = {
             "country": 3,
@@ -57,10 +59,10 @@ class RefETFrame(ttk.Frame):
         head.grid(row=0, sticky="NEW")
 
         # separator
-        ttk.Separator(self, orient="horizontal").grid(row=1, pady=8, sticky="ew")
+        ttk.Separator(self, orient="horizontal").grid(row=1, pady=8, sticky="WE")
 
         # body
-        body = ttk.Frame(self, borderwidth="3")
+        body = ttk.Frame(self)
         inputs = {
             "Tmin (C)": "tmin",
             "Tmax (C)": "tmax",
@@ -76,7 +78,10 @@ class RefETFrame(ttk.Frame):
             **outputs,
         }
         for row in range(13):
+            # body.rowconfigure(row, weight=1)
             for column, (key, value) in enumerate(loop.items()):
+                body.columnconfigure(column, weight=1)
+
                 if row == 0:
                     widget = ttk.Label(body, text=key, font=bold_font)
 
@@ -169,5 +174,5 @@ class RefETFrame(ttk.Frame):
 
 if __name__ == "__main__":
     root = tk.Tk()
-    RefETFrame(root).grid(padx=8, pady=8, sticky="NEWS")
+    RefETFrame(root).pack(fill="both", expand=1)
     root.mainloop()
