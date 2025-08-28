@@ -4,6 +4,8 @@ import tkinter as tk
 from tkinter import ttk
 from typing import NamedTuple, Callable
 
+from ..widgets.scrollable import Scrollable
+
 
 class InputItem[T](NamedTuple):
     validate: Callable = str
@@ -79,28 +81,11 @@ class GIRFrame(ttk.Frame):
         )
 
         # body
-        self.canvas = canvas = tk.Canvas(self, borderwidth=0)
-        scrollbar = ttk.Scrollbar(self, orient="vertical", command=canvas.yview)
-        body = ttk.Frame(canvas)
-        
-        canvas.grid(row=0, column=2, sticky="NEWS")
-        scrollbar.grid(row=0, column=3, sticky="NS")
-        
-        canvas.create_window((0, 0), window=body, anchor="nw", tags="self.frame")
-        canvas.configure(yscrollcommand=scrollbar.set)
-        canvas.bind("<Configure>", lambda e: canvas.itemconfig("self.frame", width=e.width))
-        
-        for event in {"MouseWheel", "Button-4", "Button-5"}:
-            canvas.bind_all(f"<{event}>", self._on_mousewheel)
-        
-        body.bind(
-            "<Configure>",
-            lambda e: canvas.configure(
-                scrollregion=canvas.bbox("all"),
-                width=body.winfo_reqwidth(),
-            )
-        )
-        
+        scroll = Scrollable(self)
+        scroll.grid(row=0, column=2, sticky="NEWS")
+        scroll.scrollbar.grid(row=0, column=3, sticky="NS")
+
+        body = scroll.frame
         inputs = {
             "Tmin (C)": "tmin",
             "Tmax (C)": "tmax",
@@ -148,6 +133,9 @@ class GIRFrame(ttk.Frame):
 
                 widget.grid(row=row, column=column, sticky="NEWS", ipadx=5)
 
+        self.update()
+        scroll.configure(width=body.winfo_reqwidth())
+
     def verify_dates(self, event):
         plant, harvest = self.dates
 
@@ -157,14 +145,6 @@ class GIRFrame(ttk.Frame):
             msg = "Error:\nharvest date must be after plant date"
 
         self.head_details["errmsg"].configure(text=msg)
-    
-    def _on_mousewheel(self, event):
-        if event.num == 4:   # Linux scroll up
-            self.canvas.yview_scroll(-1, "units")
-        elif event.num == 5: # Linux scroll down
-            self.canvas.yview_scroll(1, "units")
-        else:  # Windows / macOS
-            self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
 
 
 if __name__ == "__main__":
