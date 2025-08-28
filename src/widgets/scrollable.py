@@ -6,13 +6,15 @@ from .debounce import debounce
 
 
 class Scrollable(tk.Canvas):
+    """A scrollable container that adapts to its content."""
+
     def __init__(
         self,
         parent: tk.Misc,
         orient: Literal["horizontal", "vertical"] = "vertical",
         **kw,
     ) -> None:
-        super().__init__(parent, **kw)
+        super().__init__(parent, borderwidth=0, **kw)
 
         self.orient = orient
         self.frame = tk.Frame(self)  # inner frame
@@ -26,7 +28,7 @@ class Scrollable(tk.Canvas):
         self.frame.bind("<Configure>", self._update_scrollregion)
         self.bind("<Configure>", self._resize_canvas)
 
-        # Bind mouse wheel for scrolling
+        # Bind mouse wheel for scrolling on different os
         for event in {"MouseWheel", "Button-4", "Button-5"}:
             self.bind_all(f"<{event}>", self._on_mousewheel)
 
@@ -49,7 +51,14 @@ class Scrollable(tk.Canvas):
     @debounce(50)
     def _resize_canvas(self, event=None):
         dim = self.select("width", "height")
-        self.itemconfig(self._window, {dim: getattr(self, f"winfo_{dim}")()})
+        inner_size = getattr(self.frame, f"winfo_req{dim}")()
+        self_size = getattr(self, f"winfo_{dim}")()
+
+        if inner_size < self_size:
+            self.itemconfig(self._window, {dim: self_size})
+        else:
+            self.configure({dim: inner_size})
+
         self._check_scrollbar()
 
     def _check_scrollbar(self, event=None):
