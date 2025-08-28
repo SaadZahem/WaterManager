@@ -1,8 +1,8 @@
-import functools
+from functools import partial
 import tkinter as tk
 from tkinter import ttk
 from datetime import date, timedelta
-from typing import Callable, Literal
+from typing import Callable, Literal, cast
 
 from .scrollable import Scrollable
 
@@ -51,7 +51,7 @@ class DataTable(Scrollable):
             lbl = ttk.Label(
                 self.frame, text=text, style="Heading.TLabel", anchor="center"
             )
-            lbl.grid(row=0, column=j, sticky="nsew", padx=2, pady=2)
+            lbl.grid(row=0, column=j, sticky="news", padx=2, pady=2)
             self.frame.grid_columnconfigure(j, weight=1)
 
     def populate(self, start: date, end: date):
@@ -114,22 +114,10 @@ class DataTable(Scrollable):
         # (b) numerical entries (all input columns)
         entries = []
         for j in range(len(self.headers) - self.output_count):
-            e = ttk.Entry(self.frame, width=10)
-            e.grid(row=row_index, column=3 + j, sticky="nsew", padx=2, pady=2)
+            e = ttk.Entry(self.frame, width=8, justify="center")
+            e.grid(row=row_index, column=3 + j, sticky="news", padx=2, pady=2)
 
-            def validate(_event, entry=e, row=row_index):
-                val = entry.get().strip()
-                if val == "":
-                    entry.configure(foreground="black")
-                    return
-                try:
-                    float(val)
-                    entry.configure(foreground="black")
-                except ValueError:
-                    entry.configure(foreground="red")
-                self._check_row_complete(row)
-
-            e.bind("<FocusOut>", validate)
+            e.bind("<FocusOut>", partial(self.validate, row=row_index))
             e.bind("<Return>", self._on_enter)
             e.bind("<Tab>", self._on_enter)
 
@@ -137,7 +125,7 @@ class DataTable(Scrollable):
             for event in {"Up", "Right", "Down", "Left"}:
                 e.bind(
                     f"<{event}>",
-                    functools.partial(self._on_arrow, row=row_index, column=j),
+                    partial(self._on_arrow, row=row_index, column=j),
                 )
 
             entries.append(e)
@@ -150,7 +138,7 @@ class DataTable(Scrollable):
             out_lbl.grid(
                 row=row_index,
                 column=3 + len(self.headers) - self.output_count + k,
-                sticky="nsew",
+                sticky="news",
                 padx=2,
                 pady=2,
             )
@@ -185,6 +173,23 @@ class DataTable(Scrollable):
 
         self.rows[r % h]["entries"][c].focus()
         return "break"
+
+    def validate(self, event: tk.Event, *, row: int) -> None:
+        entry = cast(ttk.Entry, event.widget)
+
+        try:
+            float(entry.get())
+        except ValueError:
+            valid = not entry.get()
+        else:
+            valid = True
+
+        if valid:
+            entry.configure(style="TEntry")
+        else:
+            entry.configure(style="Invalid.TEntry")
+
+        self._check_row_complete(row)
 
     def _check_row_complete(self, row_index: int):
         """Check if all entries are valid, then call callback."""
@@ -228,7 +233,7 @@ if __name__ == "__main__":
     headers = ["Irrigation", "Fertilizer", "Rainfall", "Sum", "Avg"]
 
     table = DataTable(root, headers=headers, callback=on_row_complete, output_count=2)
-    table.grid(row=0, column=0, sticky="nsew")
+    table.grid(row=0, column=0, sticky="news")
     table.scrollbar.grid(row=0, column=1, sticky="ns")
 
     root.update()

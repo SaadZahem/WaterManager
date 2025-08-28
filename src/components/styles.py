@@ -13,8 +13,8 @@ style.configure("Output.TLabel", background="grey50", borderwidth=5, relief="sun
 style.configure("Blank.TLabel", borderwidth=5, relief="sunken", width=8)
 style.configure("Invalid.TEntry", foreground="white", fieldbackground="red")
 
-# style.map(
-#     "TEntry",
-#     foreground=[("invalid", "blue")],
-#     fieldbackground=[("invalid", "red")],  # use fieldbackground, not background
-# )
+style.map(
+    "Invalid.TEntry",
+    foreground=[("focus", "red")],
+    fieldbackground=[("focus", "white")],  # use fieldbackground, not background
+)
