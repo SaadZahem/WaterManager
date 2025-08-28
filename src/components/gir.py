@@ -33,13 +33,14 @@ class GIRFrame(ttk.Frame):
 
         # links
         self.dates: list[DateEntry] = []
+        self.widgets = {}
 
         # styles
         from .styles import bold_font
 
         # head
         head = ttk.Frame(self, padding=8)
-        self.head_details = {
+        firstsection = {
             "Crop": InputItem(choices=self.CROP_TYPES),
             "Plant Date": InputItem(factory=date),
             "Harvest Date": InputItem(factory=date),
@@ -61,7 +62,7 @@ class GIRFrame(ttk.Frame):
             "tx": InputItem(float),
             "h": InputItem(float),
         }
-        self.head_details.update(self.required)
+        self.head_details = {**firstsection, **self.required}
         for row, (label, item) in enumerate(self.head_details.items()):
             head.grid_rowconfigure(row, weight=1, pad=4)
 
@@ -92,7 +93,20 @@ class GIRFrame(ttk.Frame):
                     ),
                 )
 
+                # Bind arrow keys
+                for event in {"Up", "Down"}:
+                    widget.bind(
+                        f"<{event}>",
+                        partial(
+                            self._move_focus_vertically,
+                            row=row,
+                            start=len(firstsection),
+                            count=len(self.required),
+                        ),
+                    )
+
             widget.grid(row=row, column=1, sticky="W", columnspan=2)
+            self.widgets[row] = widget
 
         head.grid(row=0, column=0, sticky="NWS")
 
@@ -121,6 +135,18 @@ class GIRFrame(ttk.Frame):
         # Ensure all elements are visible at once
         self.update_idletasks()
         self.table.configure(width=self.table.frame.winfo_reqwidth())
+
+    def _move_focus_vertically(self, event: tk.Event, *, row: int, start: int, count: int) -> None:
+        direction = {"Up": -1, "Down": 1}[event.keysym]
+        row += direction
+        end = start + count
+
+        if row < start:
+            row = ~-end
+        elif row >= end:
+            row = start
+        
+        self.widgets[row].focus()
 
     def _validate(self, newvalue: str, widgetname: str, *, item: InputItem) -> bool:
         entry = self.nametowidget(widgetname)
