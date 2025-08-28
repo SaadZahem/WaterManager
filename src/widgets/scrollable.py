@@ -14,15 +14,19 @@ class Scrollable(tk.Canvas):
         orient: Literal["horizontal", "vertical"] = "vertical",
         **kw,
     ) -> None:
-        super().__init__(parent, borderwidth=0, **kw)
+        super().__init__(parent, highlightthickness=0, **kw)
 
         self.orient = orient
-        self.frame = tk.Frame(self)  # inner frame
+        self.frame = ttk.Frame(self)  # inner frame
         self._window = self.create_window((0, 0), window=self.frame, anchor="nw")
 
         # Scrollbar (but not placed yet)
         self.scrollbar = ttk.Scrollbar(parent, orient=orient, command=self.view)
         self.configure({self.select(*"yx") + "scrollcommand": self.scrollbar.set})
+        
+        # Copy bg from the inner themed frame
+        bg = ttk.Style().lookup("TFrame", "background")
+        self.configure(background=bg)
 
         # Bind resizing events.
         self.frame.bind("<Configure>", self._update_scrollregion)

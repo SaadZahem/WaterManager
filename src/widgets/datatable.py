@@ -47,7 +47,7 @@ class DataTable(Scrollable):
         all_headers = base_headers + input_headers + output_headers
 
         for j, text in enumerate(all_headers):
-            lbl = ttk.Label(self.frame, text=text, style="Heading.TLabel")
+            lbl = ttk.Label(self.frame, text=text, style="Heading.TLabel", anchor="center")
             lbl.grid(row=0, column=j, sticky="nsew", padx=2, pady=2)
             self.frame.grid_columnconfigure(j, weight=1)
 
@@ -79,7 +79,7 @@ class DataTable(Scrollable):
         widgets = []
 
         for column in range(3 + len(self.headers)):
-            blank = ttk.Label(self.frame, text="-", anchor="center")
+            blank = ttk.Label(self.frame, anchor="center", style="Blank.TLabel")
             blank.grid(row=row, column=column, sticky="news", padx=2, pady=2)
             widgets.append(blank)
 
@@ -102,8 +102,10 @@ class DataTable(Scrollable):
         date_str = current_date.strftime("%Y-%m-%d")
 
         for column, text in enumerate((day_name, str(doy), date_str)):
-            lbl = ttk.Label(self.frame, text=text)
-            lbl.grid(row=row_index, column=column, sticky="news", padx=2, pady=2)
+            lbl = ttk.Label(
+                self.frame, text=text, style="Const.TLabel", anchor="center"
+            )
+            lbl.grid(row=row_index, column=column, sticky="news", ipadx=4, ipady=2)
             widgets.append(lbl)
 
         # (b) numerical entries (all input columns)
@@ -144,7 +146,7 @@ class DataTable(Scrollable):
         # (c) output labels
         outputs = []
         for k in range(self.output_count):
-            out_lbl = ttk.Label(self.frame, text="")
+            out_lbl = ttk.Label(self.frame, style="Output.TLabel", width=8)
             out_lbl.grid(
                 row=row_index,
                 column=3 + len(self.headers) - self.output_count + k,

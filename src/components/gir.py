@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 from tkcalendar import DateEntry
 import tkinter as tk
 from tkinter import ttk
@@ -24,6 +24,7 @@ class GIRFrame(ttk.Frame):
 
         self.columnconfigure(2, weight=1)
         self.rowconfigure(0, weight=1)
+        self["padding"] = (0, 4, 8, 4)
 
         # links
         self.dates: list[DateEntry] = []
@@ -117,7 +118,7 @@ class GIRFrame(ttk.Frame):
             msg = "Error:\nharvest date must be after plant date"
 
         self.head_details["errmsg"].configure(text=msg)
-    
+
     def verify_all(self, doy: int, values: list[float]):
         pass
 
