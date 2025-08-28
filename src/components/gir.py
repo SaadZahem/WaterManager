@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import date, timedelta
 from tkcalendar import DateEntry
 import tkinter as tk
 from tkinter import ttk
@@ -35,8 +35,8 @@ class GIRFrame(ttk.Frame):
         head = ttk.Frame(self)
         self.head_details = {
             "Crop": InputItem[str](choices=self.CROP_TYPES),
-            "Plant Date": InputItem(factory=datetime),
-            "Harvest Date": InputItem(factory=datetime),
+            "Plant Date": InputItem(factory=date),
+            "Harvest Date": InputItem(factory=date),
             "errmsg": ttk.Label(
                 head, anchor="center", foreground="red", font=bold_font
             ),
@@ -63,7 +63,7 @@ class GIRFrame(ttk.Frame):
             if item.choices:
                 widget = ttk.Combobox(head, values=item.choices)
 
-            elif item.factory is datetime:
+            elif item.factory is date:
                 # current issue: calendar dropdown is self-destroyed when the widget is originally focused
                 widget = DateEntry(head, date_pattern="y-mm-dd")
                 widget.bind("<<DateEntrySelected>>", self.verify_dates)
@@ -87,52 +87,82 @@ class GIRFrame(ttk.Frame):
 
         body = scroll.frame
         inputs = {
-            "Tmin (C)": "tmin",
-            "Tmax (C)": "tmax",
-            "Humidity (%)": "humidity",
-            "Wind Speed (m/s)": "wind_speed",
-            "Sun (hour)": "sun_hours",
+            "Zr": "",
+            "TAW": "",
+            "RAW": "",
+            "ETa (mm/day)": "",
+            "Precipitation (mm/day)": "",
+            "Di": "",
+            "LR": "",
+            "R (on/off)": False,
         }
-        outputs = {"ETr (mm/day)": ""}
+        outputs = {
+            "F": "",
+            "Dg": "",
+            "GIR": "",
+        }
         loop = {
-            "": lambda r: date(date.today().year, r, 1).strftime("%B"),
+            "": lambda r: current + timedelta(days=~-r),
             **inputs,
             **outputs,
         }
+        current = date.today()
         for row in range(61):
-            for column, (key, value) in enumerate(loop.items()):
+            for column, (key, value) in enumerate(loop.items(), start=2):
                 if row == 0:
-                    widget = ttk.Label(body, text=key, font=bold_font)
+                    widgets = [ttk.Label(body, text=key, font=bold_font)]
 
                 elif key in inputs:
                     variable = tk.StringVar()
-                    widget = ttk.Entry(
-                        body,
-                        justify="center",
-                        validate="focusout",
-                        # validatecommand=(self.register(self.validate), "%P", "%W"),
-                        textvariable=variable,
-                    )
+                    widgets = [
+                        ttk.Entry(
+                            body,
+                            justify="center",
+                            validate="focusout",
+                            # validatecommand=(self.register(self.validate), "%P", "%W"),
+                            textvariable=variable,
+                            width=8,
+                        )
+                    ]
                     # self.variables[value, row] = variable
                     # self.widgets[str(widget)] = row
 
-                elif column == 0:
-                    widget = ttk.Label(
-                        body, text=row, style="Const.TLabel", anchor="center"
-                    )
+                elif column == 2:
+                    widgets = [
+                        ttk.Label(
+                            body,
+                            text=value(row).strftime("%a"),
+                            style="Const.TLabel",
+                            anchor="center",
+                        ),
+                        ttk.Label(
+                            body,
+                            text=value(row).strftime("%j"),
+                            style="Const.TLabel",
+                            anchor="center",
+                        ),
+                        ttk.Label(
+                            body, text=value(row), style="Const.TLabel", anchor="center"
+                        ),
+                    ]
+                    column = 0
                 else:
                     variable = tk.StringVar()
-                    widget = ttk.Label(
-                        body,
-                        text=value,
-                        style="Output.TLabel",
-                        textvariable=variable,
-                        anchor="center",
-                    )
+                    widgets = [
+                        ttk.Label(
+                            body,
+                            text=value,
+                            style="Output.TLabel",
+                            textvariable=variable,
+                            anchor="center",
+                        )
+                    ]
                     # self.outcome[row] = variable
 
-                widget.grid(row=row, column=column, sticky="NEWS", ipadx=5)
+                for i, widget in enumerate(widgets, column):
+                    widget.grid(row=row, column=i, sticky="NEWS", ipadx=5)
 
+        # Ensure all elements are visible at once
         self.update()
         scroll.configure(width=body.winfo_reqwidth())
 
