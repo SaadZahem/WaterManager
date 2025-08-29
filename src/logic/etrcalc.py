@@ -6,7 +6,7 @@ def esat(t: float):
     return 0.6108 * math.exp((17.27 * t) / (t + 237.3))
 
 
-def j(m: int, d: int | None = None, leap: bool = False) -> int:
+def calculate_day_of_year(m: int, d: int | None = None, leap: bool = False, /) -> int:
     """Calculate day of the year."""
     if d is not None:
         x = 0 if m <= 2 else -2 + int(leap)
@@ -39,6 +39,9 @@ def calculate_reference_evapotranspiration(
         * (0.6108 * math.exp((17.27 * temp) / (temp + 237.3)))
         / pow((temp + 237.3), 2)
     )
+
+    def esat(t: float):
+        return 0.6108 * math.exp((17.27 * t) / (t + 237.3))
 
     es = (esat(tmax) + esat(tmin)) / 2
     ea = humidity / 100 * (esat(tmin + esat(tmax))) / 2
