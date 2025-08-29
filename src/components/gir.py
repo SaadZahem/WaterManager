@@ -117,6 +117,7 @@ class GIRFrame(ttk.Frame):
 
         # body
         headers = [
+            "Zr",
             "TAW",
             "RAW",
             "ETa (mm/day)",
