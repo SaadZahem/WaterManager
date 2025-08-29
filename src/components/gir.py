@@ -54,13 +54,13 @@ class GIRFrame(ttk.Frame):
             "AW": InputItem(float),
             "Ece": InputItem(float),
             "Ecw": InputItem(float),
-            "MAP": InputItem(float),
+            "MAD": InputItem(float),
             "Zn": InputItem(float),
             "Zo": InputItem(float),
             "Zx": InputItem(float),
             "to": InputItem(float),
             "tx": InputItem(float),
-            "h": InputItem(float),
+            "n": InputItem(float),
         }
         self.head_details = {**firstsection, **self.required}
         for row, (label, item) in enumerate(self.head_details.items()):
