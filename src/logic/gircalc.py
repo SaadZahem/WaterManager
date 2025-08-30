@@ -1,105 +1,102 @@
+from itertools import takewhile
 from typing import NamedTuple
 
 
-class Params(NamedTuple):
-    """
-    Container for parameters and derived irrigation calculations.
-
-    Fields are grouped into:
-      - global parameters (area, aw, ece, ecw, mad, zo, zx, to, tx, n)
-      - local parameters (doy, eta, precipitation)
-    """
-
-    # global
+class GlobalParams(NamedTuple):
     area: float
     aw: float
     ece: float
     ecw: float
     mad: float
-    zo: float  # initial rooting depth
-    zx: float  # maximum rooting depth
-    to: int    # development start DOY
-    tx: int    # development end DOY
-    n: float   # curve shape parameter
+    zo: float
+    zx: float
+    to: int
+    tx: int
+    n: float
 
-    # local
-    doy: int             # current day of year
-    eta: float           # evapotranspiration [mm/day]
-    precipitation: float # precipitation [mm/day]
 
-    # --- Derived values ---
+class LocalParams(NamedTuple):
+    g: GlobalParams
+    doy: int
+    eta: float
+    precipitation: float
+    r: bool = False
+    previous: "LocalParams | None" = None
 
     @property
     def zr(self) -> float:
-        """Root depth [m] at current DOY."""
-        if self.doy < self.to:
-            return self.zo
-        return self.zo + (self.zx - self.zo) * (
-            (self.doy - self.to) / (self.tx - self.to)
-        ) ** (1 / self.n)
+        g = self.g
+        if self.doy < g.to:
+            return g.zo
+        return g.zo + (g.zx - g.zo) * ((self.doy - g.to / 2) / (g.tx - g.to / 2)) ** (
+            1 / g.n
+        )
 
     @property
     def taw(self) -> float:
-        """Total available water [mm]."""
-        return self.aw * self.zr
+        return self.g.aw * self.zr
 
     @property
     def raw(self) -> float:
-        """Readily available water [mm]."""
-        return self.taw * self.mad
+        return self.taw * self.g.mad
 
     @property
     def di(self) -> float:
-        """Daily net irrigation requirement [mm]."""
-        return self.eta - self.precipitation
+        base = self.eta - self.precipitation
+        if self.previous is None:
+            return base
+        return base + self.previous.di
 
     @property
     def lr(self) -> float:
-        """Leaching requirement (dimensionless)."""
-        return self.ecw / (5 * self.ece - self.ecw)
+        g = self.g
+        return g.ecw / (5 * g.ece - g.ecw)
 
-    def dg(self, first_time: bool = False) -> float:
-        """
-        Gross irrigation depth [mm].
-        If first_time is True, special initialization branch is applied.
-        """
-        if first_time:
-            return self.mad - self.di
+    @property
+    def dg(self) -> float:
+        g, di = self.g, self.di
+        if self.previous is None:
+            return g.mad - di
         if self.lr > 0.1:
-            return self.di / 0.55 * (1 - self.lr)
-        return self.di / 0.55
+            return di / 0.55 * (1 - self.lr)
+        return di / 0.55
 
-    def gir(self, first_time: bool = False) -> float:
-        """
-        Gross irrigation requirement [m³].
-        Converts depth (dg) to volume using area and water density.
-        """
-        return self.dg(first_time) * self.area * 4200 / 1000
+    @property
+    def gir(self) -> float:
+        return self.dg * self.g.area * 4200 / 1000
 
+    @property
+    def f(self) -> int:
+        if not self.r:
+            return 0
+        skipped = takewhile(lambda lp: not lp.r, self._iter_previous())
+        return sum(1 for _ in skipped)
+
+    def _iter_previous(self):
+        lp = self.previous
+        while lp is not None:
+            yield lp
+            lp = lp.previous
 
 
 if __name__ == "__main__":
-    params = Params(
-        area=1.5,
-        aw=100,
-        ece=3,
-        ecw=0.5,
-        mad=0.6,
-        zo=0.3,
-        zx=1.2,
-        to=120,
-        tx=200,
-        n=2,
-        doy=150,
-        eta=5,
-        precipitation=2,
-    )
+    g = GlobalParams(1.5, 100, 3, 0.5, 0.6, 0.3, 1.2, 120, 200, 2)
 
-    print("zr =", params.zr)
-    print("taw =", params.taw)
-    print("raw =", params.raw)
-    print("di =", params.di)
-    print("lr =", params.lr)
-    print("dg =", params.dg())
-    print("gir =", params.gir())
+    rows = [
+        {"doy": 150, "eta": 5.0, "precipitation": 2.0, "r": False},
+        {"doy": 151, "eta": 4.5, "precipitation": 1.0, "r": False},
+        {"doy": 152, "eta": 5.2, "precipitation": 0.0, "r": True},  # after 2 skips
+        {"doy": 153, "eta": 4.8, "precipitation": 0.5, "r": True},  # no skips before
+    ]
 
+    prev = None
+    days = []
+    for row in rows:
+        lp = LocalParams(
+            g, row["doy"], row["eta"], row["precipitation"], row["r"], prev
+        )
+        days.append(lp)
+        prev = lp
+
+    for lp in days:
+        print(f"doy {lp.doy} → r={lp.r}, f={lp.f}")
